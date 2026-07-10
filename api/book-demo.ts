@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { waitUntil } from "@vercel/functions";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
@@ -46,30 +47,31 @@ export default async function handler(req: any, res: any) {
       });
 
       const adminEmailHtml = getAdminEmailHtml(data, date, time);
-      const adminEmails = adminEmail.split(",").map((e: string) => e.trim()).filter(Boolean);
-
-      // Send to admin(s) in parallel
-      await Promise.all(
-        adminEmails.map(async (email: string) => {
-          await transporter.sendMail({
-            from: `"GSHRM Payroll" <${smtpUser}>`,
-            to: email,
-            subject: "🚀 New Demo Request - GSHRM Payroll",
-            html: adminEmailHtml,
-          });
-          logs.push(`Admin email sent to ${email} via SMTP.`);
-        })
-      );
-
-      // Send to customer
       const customerEmailHtml = getCustomerEmailHtml(data);
-      await transporter.sendMail({
-        from: `"GSHRM Payroll" <${smtpUser}>`,
-        to: data.email,
-        subject: "Thank You for Requesting a Live Demo",
-        html: customerEmailHtml,
+
+      // Trigger the email dispatches asynchronously without awaiting them
+      const emailPromise = Promise.all([
+        transporter.sendMail({
+          from: `"GSHRM Payroll" <${smtpUser}>`,
+          to: adminEmail, // Send to all admins at once using a comma-separated string
+          subject: "🚀 New Demo Request - GSHRM Payroll",
+          html: adminEmailHtml,
+        }),
+        transporter.sendMail({
+          from: `"GSHRM Payroll" <${smtpUser}>`,
+          to: data.email,
+          subject: "Thank You for Requesting a Live Demo",
+          html: customerEmailHtml,
+        })
+      ]).then(() => {
+        console.log("Background SMTP emails successfully sent.");
+      }).catch(err => {
+        console.error("Background SMTP Error:", err);
       });
-      logs.push(`Customer email sent to ${data.email} via SMTP.`);
+
+      // Keep the execution context alive in serverless environments until emails are sent
+      waitUntil(emailPromise);
+      logs.push(`Enquiry received. Emails dispatching in background.`);
 
     } catch (err: any) {
       console.error("SMTP Error:", err);
@@ -82,31 +84,39 @@ export default async function handler(req: any, res: any) {
       const isSandbox = resendFromEmail.includes("onboarding@resend.dev");
       const adminEmailHtml = getAdminEmailHtml(data, date, time);
       const adminEmails = adminEmail.split(",").map((e: string) => e.trim()).filter(Boolean);
+      const customerEmailHtml = getCustomerEmailHtml(data);
 
-      // Send to admin(s)
-      for (const email of adminEmails) {
-        await sendResendEmail({
+      const promises = [
+        sendResendEmail({
           apiKey: resendApiKey,
           from: `GSHRM Payroll <${resendFromEmail}>`,
-          to: email,
+          to: adminEmails, // Resend accepts arrays of email strings
           subject: "🚀 New Demo Request - GSHRM Payroll",
           html: adminEmailHtml,
-        });
-        logs.push(`Admin email sent to ${email} via Resend.`);
+        })
+      ];
+
+      if (!isSandbox) {
+        promises.push(
+          sendResendEmail({
+            apiKey: resendApiKey,
+            from: `GSHRM Payroll <${resendFromEmail}>`,
+            to: data.email,
+            subject: "Thank You for Requesting a Live Demo",
+            html: customerEmailHtml,
+          })
+        );
       }
 
-      // Send to customer
-      if (!isSandbox) {
-        const customerEmailHtml = getCustomerEmailHtml(data);
-        await sendResendEmail({
-          apiKey: resendApiKey,
-          from: `GSHRM Payroll <${resendFromEmail}>`,
-          to: data.email,
-          subject: "Thank You for Requesting a Live Demo",
-          html: customerEmailHtml,
-        });
-        logs.push(`Customer email sent to ${data.email} via Resend.`);
-      }
+      const emailPromise = Promise.all(promises).then(() => {
+        console.log("Background Resend emails successfully sent.");
+      }).catch(err => {
+        console.error("Background Resend Error:", err);
+      });
+
+      // Keep the execution context alive in serverless environments until emails are sent
+      waitUntil(emailPromise);
+      logs.push(`Enquiry received. Emails dispatching in background.`);
     } catch (err: any) {
       console.error("Resend Error:", err);
       errors.push(`Resend error: ${err.message || err}`);
