@@ -146,76 +146,31 @@ export const bookDemo = async (args: { data: BookingData }) => {
   saveLocalDemoRequests(requests);
   logs.push(`Demo request successfully saved with ID: ${newRequest.id}`);
 
-  // Retrieve environment variables securely (Vite style)
-  const resendApiKey = import.meta.env.VITE_RESEND_API_KEY;
-  const resendFromEmail = import.meta.env.VITE_RESEND_FROM_EMAIL || "info@greatsupports.in";
-  const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || "kishorthavamurugan@gmail.com, masskishor143l@gmail.com, info@greatsupports.in, ganishv2@gmail.com";
+  // Send request to serverless API
+  try {
+    const response = await fetch("/api/book-demo", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
 
-  const date = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" });
-  const time = new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" });
-
-  if (resendApiKey) {
-    try {
-      const isSandbox = resendFromEmail.includes("onboarding@resend.dev");
-      const adminEmailHtml = getAdminEmailHtml(data, date, time);
-      const adminEmails = typeof adminEmail === "string" 
-        ? adminEmail.split(",").map(e => e.trim()).filter(Boolean)
-        : [adminEmail];
-
-      for (const email of adminEmails) {
-        try {
-          await sendResendEmail({
-            apiKey: resendApiKey,
-            from: `GSHRM Payroll <${resendFromEmail}>`,
-            to: email,
-            subject: "🚀 New Demo Request - GSHRM Payroll",
-            html: adminEmailHtml,
-          });
-          logs.push(`Admin notification email sent successfully to ${email} via Resend.`);
-        } catch (err: any) {
-          console.error(`Failed to send admin notification to ${email}:`, err);
-          logs.push(`Failed to send admin notification to ${email}: ${err.message || err}`);
-        }
-      }
-
-      if (!isSandbox) {
-        const customerEmailHtml = getCustomerEmailHtml(data);
-        await sendResendEmail({
-          apiKey: resendApiKey,
-          from: `GSHRM Payroll <${resendFromEmail}>`,
-          to: data.email,
-          subject: "Thank You for Requesting a Live Demo",
-          html: customerEmailHtml,
-        });
-        logs.push("Customer confirmation email sent successfully via Resend.");
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success) {
+        logs.push(...(result.logs || []));
       } else {
-        logs.push(`[Resend Sandbox Mode] Customer email confirmation skipped. Details logged to console.`);
-        console.log("Mock Customer Email Confirmation:\n", getCustomerEmailHtml(data));
+        errors.push(result.error || "Failed to send email");
+        if (result.logs) logs.push(...result.logs);
       }
-    } catch (err: any) {
-      console.error("Resend Email Sending Failed:", err);
-      logs.push(`Email delivery warning: ${err.message || err}`);
+    } else {
+      const errorText = await response.text();
+      errors.push(`Server error: ${errorText}`);
     }
-  } else {
-    logs.push("VITE_RESEND_API_KEY not set. Notification emails logged to console.");
-    console.log(`
-====== [MOCK EMAIL: ADMIN NOTIFICATION] ======
-From: GSHRM Payroll <${resendFromEmail}>
-To: ${adminEmail}
-Subject: 🚀 New Demo Request - GSHRM Payroll
-Content:
-${getAdminEmailText(data, date, time)}
-==============================================
-    `);
-    console.log(`
-====== [MOCK EMAIL: CUSTOMER CONFIRMATION] ======
-From: GSHRM Payroll <${resendFromEmail}>
-To: ${data.email}
-Subject: Thank You for Requesting a Live Demo
-Content:
-${getCustomerEmailText(data)}
-=================================================
-    `);
+  } catch (err: any) {
+    console.error("Failed to trigger serverless email endpoint:", err);
+    logs.push("Could not contact serverless function. Enquiry saved locally only.");
   }
 
   return {
