@@ -16,7 +16,7 @@ export default async function handler(req: any, res: any) {
   const smtpPort = parseInt(process.env.SMTP_PORT || "465", 10);
   const smtpSecure = process.env.SMTP_SECURE !== "false";
   const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
+  const smtpPass = process.env.SMTP_PASS ? process.env.SMTP_PASS.replace(/\s+/g, "") : undefined;
 
   const resendApiKey = process.env.RESEND_API_KEY;
   const resendFromEmail = process.env.RESEND_FROM_EMAIL || "info@greatsupports.in";

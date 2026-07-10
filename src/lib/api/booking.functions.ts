@@ -192,9 +192,18 @@ export const bookDemo = async (args: { data: BookingData }) => {
         logMockEmail(data);
       }
     } else {
-      // API returned error (e.g. 404 or 500)
-      logs.push(`Serverless endpoint returned status ${response.status}. Email logged to console.`);
-      logMockEmail(data);
+      if (response.status === 404) {
+        logs.push("Serverless endpoint not found (404). Email logged to console.");
+        logMockEmail(data);
+      } else {
+        const errorText = await response.text();
+        let parsedError = errorText;
+        try {
+          const parsed = JSON.parse(errorText);
+          parsedError = parsed.error || errorText;
+        } catch {}
+        errors.push(`Mail Server Error: ${parsedError}`);
+      }
     }
   } catch (err: any) {
     console.warn("Failed to reach serverless email endpoint:", err);
