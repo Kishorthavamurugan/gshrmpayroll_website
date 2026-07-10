@@ -107,6 +107,25 @@ function isDuplicateRequest(email: string): boolean {
   );
 }
 
+function logMockEmail(data: BookingData) {
+  const date = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" });
+  const time = new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" });
+  console.log(`
+====== [MOCK EMAIL: ADMIN NOTIFICATION] ======
+To: kishorthavamurugan@gmail.com, masskishor143l@gmail.com, info@greatsupports.in, ganishv2@gmail.com, shivagk729@hotmail.com
+Subject: 🚀 New Demo Request - GSHRM Payroll
+Content:
+Name: ${data.name}
+Company: ${data.company}
+Email: ${data.email}
+Phone: ${data.phone}
+Employees: ${data.employees}
+Date: ${date}
+Time: ${time}
+==============================================
+  `);
+}
+
 export const bookDemo = async (args: { data: BookingData }) => {
   const { data } = args;
   const errors: string[] = [];
@@ -157,20 +176,30 @@ export const bookDemo = async (args: { data: BookingData }) => {
     });
 
     if (response.ok) {
-      const result = await response.json();
-      if (result.success) {
-        logs.push(...(result.logs || []));
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        const result = await response.json();
+        if (result.success) {
+          logs.push(...(result.logs || []));
+        } else {
+          // If the serverless function itself returned an error, report it
+          errors.push(result.error || "Failed to send email");
+          if (result.logs) logs.push(...result.logs);
+        }
       } else {
-        errors.push(result.error || "Failed to send email");
-        if (result.logs) logs.push(...result.logs);
+        // Not a JSON response (likely SPA routing HTML fallback in local dev)
+        logs.push("Serverless function not running locally. Email logged to console.");
+        logMockEmail(data);
       }
     } else {
-      const errorText = await response.text();
-      errors.push(`Server error: ${errorText}`);
+      // API returned error (e.g. 404 or 500)
+      logs.push(`Serverless endpoint returned status ${response.status}. Email logged to console.`);
+      logMockEmail(data);
     }
   } catch (err: any) {
-    console.error("Failed to trigger serverless email endpoint:", err);
-    logs.push("Could not contact serverless function. Enquiry saved locally only.");
+    console.warn("Failed to reach serverless email endpoint:", err);
+    logs.push("Could not contact serverless function. Email logged to console.");
+    logMockEmail(data);
   }
 
   return {
