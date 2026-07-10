@@ -1,0 +1,42 @@
+# GSHRM Payroll
+
+> India's smart payroll & HRMS software. Automate payroll, attendance, compliance, PF, ESI, PT, TDS and employee management from one intelligent platform. Trusted by 5,000+ Indian businesses.
+
+GSHRM helps Indian SMEs, startups, restaurants, hotels, retail chains, manufacturers, hospitals, schools and logistics companies (5 to 5,000+ employees) run error-free payroll in under 10 minutes, automate PF/ESI/PT/TDS filings, and manage the full employee lifecycle.
+
+## Pages
+- [Home](/): Overview of GSHRM Payroll & HRMS platform.
+- [Payroll Software](/payroll-software): Automated salary, payslips and statutory filings.
+- [HRMS Software](/hrms-software): Complete employee lifecycle in one platform.
+- [Attendance Management](/attendance-management): Biometric, GPS and geo-fenced check-ins.
+- [Leave Management](/leave-management): Configurable policies and auto approvals.
+- [Compliance Management](/compliance-management): PF, ESI, PT, TDS and labour-law ready.
+- [Employee Self-Service](/employee-self-service): Free mobile app for employees.
+- [Pricing](/pricing): Plans from ₹49 per employee per month.
+- [About Us](/about-us): Company, mission and team.
+- [Contact Us](/contact-us): Book a free demo or reach sales.
+- [Blog](/blog): Payroll, HRMS and compliance insights.
+
+## Industries
+- [Payroll for SMEs](/payroll-for-smes)
+- [Payroll for Startups](/payroll-for-startups)
+- [Payroll for Restaurants](/payroll-for-restaurants)
+- [Payroll for Hotels](/payroll-for-hotels)
+- [Payroll for Retail](/payroll-for-retail)
+- [Payroll for Manufacturing](/payroll-for-manufacturing)
+- [Payroll for Healthcare](/payroll-for-healthcare)
+- [Payroll for Logistics](/payroll-for-logistics)
+
+## Comparisons
+- [GSHRM vs Keka](/gshrm-vs-keka)
+- [GSHRM vs GreytHR](/gshrm-vs-greythr)
+- [GSHRM vs Zoho Payroll](/gshrm-vs-zoho-payroll)
+- [GSHRM vs PagarBook](/gshrm-vs-pagarbook)
+- [GSHRM vs RazorpayX Payroll](/gshrm-vs-razorpay-payroll)
+- [GSHRM vs Petpooja](/gshrm-vs-petpooja)
+
+## Contact
+- Phone: +91 70105 84360
+- WhatsApp: +91 70105 84360
+- Email: kishorthavamurugan@gmail.com
+- Location: Bengaluru, Karnataka, India
