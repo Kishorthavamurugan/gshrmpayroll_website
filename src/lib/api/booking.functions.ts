@@ -167,7 +167,7 @@ export const bookDemo = async (args: { data: BookingData }) => {
 
   // Send request to serverless API
   try {
-    const response = await fetch("/api/book-demo", {
+    const response = await fetch("https://gshrmpayroll-api.vercel.app/api/book-demo", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -201,7 +201,7 @@ export const bookDemo = async (args: { data: BookingData }) => {
         try {
           const parsed = JSON.parse(errorText);
           parsedError = parsed.error || errorText;
-        } catch {}
+        } catch { }
         errors.push(`Mail Server Error: ${parsedError}`);
       }
     }
