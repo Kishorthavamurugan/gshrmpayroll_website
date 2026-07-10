@@ -1,18 +1,4 @@
-import { createServerFn } from "@tanstack/react-start";
-import { getRequestIP } from "@tanstack/react-start/server";
-import nodemailer from "nodemailer";
 import { z } from "zod";
-import { getServerConfig } from "../config.server";
-import {
-  createDemoRequest,
-  getDemoRequests as dbGetDemoRequests,
-  updateDemoRequestStatus as dbUpdateDemoRequestStatus,
-  isDuplicateRequest,
-  DemoRequestStatus,
-  deleteDemoRequest as dbDeleteDemoRequest,
-  deleteMultipleDemoRequests as dbDeleteMultipleDemoRequests,
-  deleteAllDemoRequests as dbDeleteAllDemoRequests,
-} from "./db.server";
 
 // Input validation schema using Zod
 const BookingInputSchema = z.object({
@@ -25,273 +11,267 @@ const BookingInputSchema = z.object({
 
 type BookingData = z.infer<typeof BookingInputSchema>;
 
-// Memory cache for rate limiting by IP (max 5 requests per hour per IP)
-const ipRequestCounts = new Map<string, { count: number; resetTime: number }>();
+export type DemoRequestStatus =
+  | "Pending"
+  | "Contacted"
+  | "Demo Scheduled"
+  | "Demo Completed"
+  | "Cancelled";
 
-function checkRateLimit(ip: string): boolean {
+export interface DemoRequest {
+  id: string;
+  fullName: string;
+  company: string;
+  email: string;
+  phone: string;
+  employees: string;
+  status: DemoRequestStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const LOCAL_STORAGE_KEY = "gshrm_demo_requests";
+
+const SEED_REQUESTS: DemoRequest[] = [
+  {
+    id: "req_05gkl22z3_1783603649244",
+    fullName: "arjun",
+    company: "K S Rangasamy Collage of Technology",
+    email: "yuj@gmail.com",
+    phone: "+917010584360",
+    employees: "1 – 25",
+    status: "Pending",
+    createdAt: "2026-07-09T13:27:29.244Z",
+    updatedAt: "2026-07-09T13:27:29.244Z"
+  },
+  {
+    id: "req_6q2sj58rk_1783664943887",
+    fullName: "arjun",
+    company: "K S Rangasamy Collage of Technology",
+    email: "jsxb@gmail.com",
+    phone: "+917010584360",
+    employees: "1 – 25",
+    status: "Pending",
+    createdAt: "2026-07-10T06:29:03.887Z",
+    updatedAt: "2026-07-10T06:29:03.887Z"
+  }
+];
+
+// Helper to get requests from localStorage
+function getLocalDemoRequests(): DemoRequest[] {
+  if (typeof window === "undefined") return [];
+  const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+  if (!stored) {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(SEED_REQUESTS, null, 2));
+    return SEED_REQUESTS;
+  }
+  try {
+    return JSON.parse(stored) as DemoRequest[];
+  } catch {
+    return SEED_REQUESTS;
+  }
+}
+
+// Helper to save requests to localStorage
+function saveLocalDemoRequests(requests: DemoRequest[]) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(requests, null, 2));
+  }
+}
+
+// Memory cache for rate limiting by IP (mock client-side)
+const lastRequestTimeKey = "gshrm_last_request_time";
+function checkRateLimit(): boolean {
+  if (typeof window === "undefined") return true;
   const now = Date.now();
-  const limitTime = 60 * 60 * 1000; // 1 hour
-  const maxRequests = 5;
-
-  const record = ipRequestCounts.get(ip);
-  if (!record || now > record.resetTime) {
-    ipRequestCounts.set(ip, { count: 1, resetTime: now + limitTime });
-    return true;
+  const stored = localStorage.getItem(lastRequestTimeKey);
+  if (stored) {
+    const lastTime = parseInt(stored, 10);
+    if (now - lastTime < 5000) { // 5 seconds rate limit client-side
+      return false;
+    }
   }
-
-  if (record.count >= maxRequests) {
-    return false;
-  }
-
-  record.count++;
+  localStorage.setItem(lastRequestTimeKey, now.toString());
   return true;
 }
 
-export const bookDemo = createServerFn({ method: "POST" })
-  .validator(BookingInputSchema)
-  .handler(async ({ data }) => {
-    const config = getServerConfig();
-    const errors: string[] = [];
-    const logs: string[] = [];
+function isDuplicateRequest(email: string): boolean {
+  const requests = getLocalDemoRequests();
+  const normalizedEmail = email.trim().toLowerCase();
+  const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+  return requests.some(
+    (r) =>
+      r.email === normalizedEmail &&
+      new Date(r.createdAt).getTime() > oneDayAgo &&
+      r.status !== "Cancelled"
+  );
+}
 
-    // --- 1. RATE LIMITING ---
-    const clientIp = getRequestIP({ xForwardedFor: true }) || "unknown";
-    if (!checkRateLimit(clientIp)) {
-      throw new Error("Too many requests from this IP. Please try again after an hour.");
-    }
+export const bookDemo = async (args: { data: BookingData }) => {
+  const { data } = args;
+  const errors: string[] = [];
+  const logs: string[] = [];
 
-    // --- 2. DUPLICATE CHECK ---
-    const isDuplicate = await isDuplicateRequest(data.email);
-    if (isDuplicate) {
-      throw new Error("A demo request for this email has already been submitted in the last 24 hours.");
-    }
+  // Validate data client-side
+  const parseResult = BookingInputSchema.safeParse(data);
+  if (!parseResult.success) {
+    throw new Error(parseResult.error.errors.map(e => e.message).join(", "));
+  }
 
-    // --- 3. SAVE TO DATABASE ---
-    let savedRequest;
+  // Rate Limiting
+  if (!checkRateLimit()) {
+    throw new Error("Too many requests. Please wait a few seconds before submitting again.");
+  }
+
+  // Duplicate Check
+  if (isDuplicateRequest(data.email)) {
+    throw new Error("A demo request for this email has already been submitted in the last 24 hours.");
+  }
+
+  // Save to LocalStorage
+  const requests = getLocalDemoRequests();
+  const newRequest: DemoRequest = {
+    id: `req_${Math.random().toString(36).substring(2, 11)}_${Date.now()}`,
+    fullName: data.name,
+    company: data.company,
+    email: data.email,
+    phone: data.phone,
+    employees: data.employees,
+    status: "Pending",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  requests.push(newRequest);
+  saveLocalDemoRequests(requests);
+  logs.push(`Demo request successfully saved with ID: ${newRequest.id}`);
+
+  // Retrieve environment variables securely (Vite style)
+  const resendApiKey = import.meta.env.VITE_RESEND_API_KEY;
+  const resendFromEmail = import.meta.env.VITE_RESEND_FROM_EMAIL || "info@greatsupports.in";
+  const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || "kishorthavamurugan@gmail.com, masskishor143l@gmail.com, info@greatsupports.in, ganishv2@gmail.com";
+
+  const date = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" });
+  const time = new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" });
+
+  if (resendApiKey) {
     try {
-      savedRequest = await createDemoRequest({
-        fullName: data.name,
-        company: data.company,
-        email: data.email,
-        phone: data.phone,
-        employees: data.employees,
-      });
-      logs.push(`Demo request successfully saved with ID: ${savedRequest.id}`);
-    } catch (dbErr: any) {
-      console.error("Database save failed:", dbErr);
-      throw new Error("Failed to save demo request to the database. Please try again.");
-    }
+      const isSandbox = resendFromEmail.includes("onboarding@resend.dev");
+      const adminEmailHtml = getAdminEmailHtml(data, date, time);
+      const adminEmails = typeof adminEmail === "string" 
+        ? adminEmail.split(",").map(e => e.trim()).filter(Boolean)
+        : [adminEmail];
 
-    // --- 4. SEND EMAIL NOTIFICATIONS (via Resend) ---
-    const date = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" });
-    const time = new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" });
-
-    if (config.smtpUser && config.smtpPass) {
-      try {
-        const transporter = nodemailer.createTransport({
-          pool: true,
-          host: config.smtpHost,
-          port: config.smtpPort,
-          secure: config.smtpSecure,
-          auth: {
-            user: config.smtpUser,
-            pass: config.smtpPass,
-          },
-          tls: {
-            rejectUnauthorized: false,
-          },
-        });
-
-        // Send Notification Email to Admin(s) - send concurrently in parallel to speed up requests
-        const adminEmailHtml = getAdminEmailHtml(data, date, time);
-        const adminEmails = typeof config.adminEmail === "string" 
-          ? config.adminEmail.split(",").map(e => e.trim()).filter(Boolean)
-          : [config.adminEmail];
-
-        const adminMailPromises = adminEmails.map(async (email) => {
-          try {
-            await transporter.sendMail({
-              from: `"GSHRM Payroll" <${config.smtpUser}>`,
-              to: email,
-              subject: "🚀 New Demo Request - GSHRM Payroll",
-              html: adminEmailHtml,
-            });
-            return { email, success: true };
-          } catch (err: any) {
-            console.error(`Failed to send admin notification to ${email} via SMTP:`, err);
-            return { email, success: false, error: err.message || err };
-          }
-        });
-
-        // Customer confirmation email promise
-        const customerMailPromise = (async () => {
-          try {
-            const customerEmailHtml = getCustomerEmailHtml(data);
-            await transporter.sendMail({
-              from: `"GSHRM Payroll" <${config.smtpUser}>`,
-              to: data.email,
-              subject: "Thank You for Requesting a Live Demo",
-              html: customerEmailHtml,
-            });
-            return { success: true };
-          } catch (customerErr: any) {
-            console.error("Failed to send customer confirmation via SMTP:", customerErr);
-            return { success: false, error: customerErr.message || customerErr };
-          }
-        })();
-
-        // Await all emails in parallel for high speed
-        const [adminResults, customerResult] = await Promise.all([
-          Promise.all(adminMailPromises),
-          customerMailPromise,
-        ]);
-
-        for (const res of adminResults) {
-          if (res.success) {
-            logs.push(`Admin notification email sent successfully to ${res.email} via Gmail SMTP.`);
-          } else {
-            logs.push(`Failed to send admin notification to ${res.email} via SMTP: ${res.error}`);
-          }
-        }
-
-        if (customerResult.success) {
-          logs.push("Customer confirmation email sent successfully via Gmail SMTP.");
-        } else {
-          logs.push(`Failed to send customer confirmation via SMTP: ${customerResult.error}`);
-        }
-      } catch (err: any) {
-        console.error("Gmail SMTP Email Sending Failed:", err);
-        logs.push(`Email delivery warning (SMTP): ${err.message || err}`);
-      }
-    } else if (config.resendApiKey) {
-      try {
-        const isSandbox = config.resendFromEmail.includes("onboarding@resend.dev");
-
-        // Send Notification Email to Admin(s) - send individually to isolate failures
-        const adminEmailHtml = getAdminEmailHtml(data, date, time);
-        const adminEmails = typeof config.adminEmail === "string" 
-          ? config.adminEmail.split(",").map(e => e.trim()).filter(Boolean)
-          : [config.adminEmail];
-
-        for (const email of adminEmails) {
-          try {
-            await sendResendEmail({
-              apiKey: config.resendApiKey,
-              from: `GSHRM Payroll <${config.resendFromEmail}>`,
-              to: email,
-              subject: "🚀 New Demo Request - GSHRM Payroll",
-              html: adminEmailHtml,
-            });
-            logs.push(`Admin notification email sent successfully to ${email} via Resend.`);
-          } catch (err: any) {
-            console.error(`Failed to send admin notification to ${email}:`, err);
-            logs.push(`Failed to send admin notification to ${email}: ${err.message || err}`);
-            
-            // If the custom domain email failed to send (likely due to verification),
-            // and the recipient is the registered account owner, attempt sandbox fallback.
-            if (email === "kishorthavamurugan@gmail.com" && !config.resendFromEmail.includes("onboarding@resend.dev")) {
-              try {
-                console.log(`Attempting fallback to onboarding@resend.dev for ${email}...`);
-                await sendResendEmail({
-                  apiKey: config.resendApiKey,
-                  from: `GSHRM Payroll <onboarding@resend.dev>`,
-                  to: email,
-                  subject: "🚀 New Demo Request - GSHRM Payroll (Fallback)",
-                  html: adminEmailHtml,
-                });
-                logs.push(`Admin notification fallback email sent successfully to ${email} via onboarding@resend.dev.`);
-              } catch (fallbackErr: any) {
-                console.error(`Fallback failed for ${email}:`, fallbackErr);
-              }
-            }
-          }
-        }
-
-        // Send Confirmation Email to Customer (only if using a custom verified domain)
-        if (!isSandbox) {
-          const customerEmailHtml = getCustomerEmailHtml(data);
+      for (const email of adminEmails) {
+        try {
           await sendResendEmail({
-            apiKey: config.resendApiKey,
-            from: `GSHRM Payroll <${config.resendFromEmail}>`,
-            to: data.email,
-            subject: "Thank You for Requesting a Live Demo",
-            html: customerEmailHtml,
+            apiKey: resendApiKey,
+            from: `GSHRM Payroll <${resendFromEmail}>`,
+            to: email,
+            subject: "🚀 New Demo Request - GSHRM Payroll",
+            html: adminEmailHtml,
           });
-          logs.push("Customer confirmation email sent successfully via Resend.");
-        } else {
-          logs.push(
-            `[Resend Sandbox Mode] Customer email confirmation skipped (can only send to verified domain or owner). Details logged to console.`
-          );
-          console.log("Mock Customer Email Confirmation:\n", getCustomerEmailHtml(data));
+          logs.push(`Admin notification email sent successfully to ${email} via Resend.`);
+        } catch (err: any) {
+          console.error(`Failed to send admin notification to ${email}:`, err);
+          logs.push(`Failed to send admin notification to ${email}: ${err.message || err}`);
         }
-      } catch (err: any) {
-        console.error("Resend Email Sending Failed:", err);
-        logs.push(`Email delivery warning: ${err.message || err}`);
       }
-    } else {
-      // Mock log for development without credentials
-      logs.push("Resend API Key not set. Notification emails logged to console.");
-      console.log(`
+
+      if (!isSandbox) {
+        const customerEmailHtml = getCustomerEmailHtml(data);
+        await sendResendEmail({
+          apiKey: resendApiKey,
+          from: `GSHRM Payroll <${resendFromEmail}>`,
+          to: data.email,
+          subject: "Thank You for Requesting a Live Demo",
+          html: customerEmailHtml,
+        });
+        logs.push("Customer confirmation email sent successfully via Resend.");
+      } else {
+        logs.push(`[Resend Sandbox Mode] Customer email confirmation skipped. Details logged to console.`);
+        console.log("Mock Customer Email Confirmation:\n", getCustomerEmailHtml(data));
+      }
+    } catch (err: any) {
+      console.error("Resend Email Sending Failed:", err);
+      logs.push(`Email delivery warning: ${err.message || err}`);
+    }
+  } else {
+    logs.push("VITE_RESEND_API_KEY not set. Notification emails logged to console.");
+    console.log(`
 ====== [MOCK EMAIL: ADMIN NOTIFICATION] ======
-From: GSHRM Payroll <${config.resendFromEmail}>
-To: ${config.adminEmail}
+From: GSHRM Payroll <${resendFromEmail}>
+To: ${adminEmail}
 Subject: 🚀 New Demo Request - GSHRM Payroll
 Content:
 ${getAdminEmailText(data, date, time)}
 ==============================================
-      `);
-      console.log(`
+    `);
+    console.log(`
 ====== [MOCK EMAIL: CUSTOMER CONFIRMATION] ======
-From: GSHRM Payroll <${config.resendFromEmail}>
+From: GSHRM Payroll <${resendFromEmail}>
 To: ${data.email}
 Subject: Thank You for Requesting a Live Demo
 Content:
 ${getCustomerEmailText(data)}
 =================================================
-      `);
-    }
+    `);
+  }
 
-    return {
-      success: errors.length === 0,
-      logs,
-      errors: errors.length > 0 ? errors : null,
-      requestId: savedRequest.id,
-    };
-  });
+  return {
+    success: errors.length === 0,
+    logs,
+    errors: errors.length > 0 ? errors : null,
+    requestId: newRequest.id,
+  };
+};
 
-export const getDemoRequestsList = createServerFn({ method: "GET" })
-  .handler(async () => {
-    return await dbGetDemoRequests();
-  });
+export const getDemoRequestsList = async () => {
+  const requests = getLocalDemoRequests();
+  // Sort by createdAt descending
+  return requests.sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+};
 
-export const updateDemoRequestStatusFn = createServerFn({ method: "POST" })
-  .validator(
-    z.object({
-      id: z.string(),
-      status: z.enum(["Pending", "Contacted", "Demo Scheduled", "Demo Completed", "Cancelled"]),
-    })
-  )
-  .handler(async ({ data }) => {
-    return await dbUpdateDemoRequestStatus(data.id, data.status as DemoRequestStatus);
-  });
+export const updateDemoRequestStatusFn = async (args: { data: { id: string; status: string } }) => {
+  const { id, status } = args.data;
+  const requests = getLocalDemoRequests();
+  const index = requests.findIndex((r) => r.id === id);
+  if (index === -1) return null;
 
-export const deleteDemoRequestFn = createServerFn({ method: "POST" })
-  .validator(z.object({ id: z.string() }))
-  .handler(async ({ data }) => {
-    return await dbDeleteDemoRequest(data.id);
-  });
+  requests[index].status = status as DemoRequestStatus;
+  requests[index].updatedAt = new Date().toISOString();
 
-export const deleteMultipleDemoRequestsFn = createServerFn({ method: "POST" })
-  .validator(z.object({ ids: z.array(z.string()) }))
-  .handler(async ({ data }) => {
-    return await dbDeleteMultipleDemoRequests(data.ids);
-  });
+  saveLocalDemoRequests(requests);
+  return requests[index];
+};
 
-export const deleteAllDemoRequestsFn = createServerFn({ method: "POST" })
-  .handler(async () => {
-    return await dbDeleteAllDemoRequests();
-  });
+export const deleteDemoRequestFn = async (args: { data: { id: string } }) => {
+  const { id } = args.data;
+  const requests = getLocalDemoRequests();
+  const index = requests.findIndex((r) => r.id === id);
+  if (index === -1) return false;
 
+  requests.splice(index, 1);
+  saveLocalDemoRequests(requests);
+  return true;
+};
+
+export const deleteMultipleDemoRequestsFn = async (args: { data: { ids: string[] } }) => {
+  const { ids } = args.data;
+  const requests = getLocalDemoRequests();
+  const filtered = requests.filter((r) => !ids.includes(r.id));
+  if (filtered.length === requests.length) return false;
+
+  saveLocalDemoRequests(filtered);
+  return true;
+};
+
+export const deleteAllDemoRequestsFn = async () => {
+  saveLocalDemoRequests([]);
+  return true;
+};
 
 // --- API CLIENT HELPERS (fetch-based to avoid extra dependencies) ---
 

@@ -4,45 +4,14 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
-  HeadContent,
-  Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect } from "react";
 
-import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { WhatsAppFab } from "@/components/site/WhatsAppFab";
-import { SITE } from "@/lib/site";
 import { Toaster } from "@/components/ui/sonner";
-
-const organizationSchema = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: SITE.name,
-  url: "/",
-  logo: "/favicon.ico",
-  description: SITE.description,
-  sameAs: [SITE.social.linkedin, SITE.social.twitter, SITE.social.youtube],
-  contactPoint: [{
-    "@type": "ContactPoint",
-    telephone: SITE.phone,
-    contactType: "sales",
-    areaServed: "IN",
-    availableLanguage: ["en", "hi"],
-  }],
-};
-
-const softwareSchema = {
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: SITE.name,
-  applicationCategory: "BusinessApplication",
-  operatingSystem: "Web, iOS, Android",
-  offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
-  aggregateRating: { "@type": "AggregateRating", ratingValue: "4.8", reviewCount: "1240" },
-};
 
 function NotFoundComponent() {
   return (
@@ -78,49 +47,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: `${SITE.name} — ${SITE.tagline}` },
-      { name: "description", content: SITE.description },
-      { name: "author", content: SITE.name },
-      { name: "theme-color", content: "#0052CC" },
-      { property: "og:site_name", content: SITE.name },
-      { property: "og:type", content: "website" },
-      { property: "og:title", content: `${SITE.name} — ${SITE.tagline}` },
-      { property: "og:description", content: SITE.description },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: `${SITE.name} — ${SITE.tagline}` },
-      { name: "twitter:description", content: SITE.description },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/1HL942jK4aVAkJMlBrOtr9adO5i2/social-images/social-1781506730467-11.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/1HL942jK4aVAkJMlBrOtr9adO5i2/social-images/social-1781506730467-11.webp" },
-    ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" },
-    ],
-    scripts: [
-      { type: "application/ld+json", children: JSON.stringify(organizationSchema) },
-      { type: "application/ld+json", children: JSON.stringify(softwareSchema) },
-    ],
-  }),
-  shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
-
-function RootShell({ children }: { children: ReactNode }) {
-  return (
-    <html lang="en">
-      <head><HeadContent /></head>
-      <body>{children}<Scripts /></body>
-    </html>
-  );
-}
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
