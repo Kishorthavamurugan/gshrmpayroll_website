@@ -23,10 +23,10 @@ export function Header() {
       }`}
     >
       <div className="container-px mx-auto max-w-7xl flex items-center justify-between h-16 md:h-20">
-        <Link to="/" className="flex items-center gap-2 font-display font-bold text-lg">
-          <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
-            G
-          </span>
+        <Link to="/" className="flex items-center gap-2.5 font-display font-bold text-lg">
+          <div className="w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
+            <img src="/logo.png" alt="GSHRM Payroll Logo" className="w-full h-full object-contain" />
+          </div>
           <span className="tracking-tight">{SITE.name}</span>
         </Link>
 
@@ -40,7 +40,6 @@ export function Header() {
         </nav>
 
         <div className="hidden lg:flex items-center gap-3">
-          <Link to="/contact-us" className="text-sm font-semibold text-foreground/80 hover:text-foreground">Sign in</Link>
           <Link to="/book-demo" className="btn-hero text-sm">Book Free Demo</Link>
         </div>
 

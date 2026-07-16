@@ -2,7 +2,7 @@ export const SITE = {
   name: "GSHRM Payroll",
   tagline: "India's Smart Payroll & HRMS Software",
   description:
-    "Automate payroll, attendance, compliance, PF, ESI, PT and TDS with GSHRM — the intelligent HRMS platform trusted by 5,000+ Indian businesses.",
+    "Automate payroll, attendance, compliance, PF, ESI, PT and TDS with GSHRM — the intelligent HRMS platform.",
   phone: "+91 98412-79594",
   whatsapp: "919841279594",
   email: "info@greatsupports.in",

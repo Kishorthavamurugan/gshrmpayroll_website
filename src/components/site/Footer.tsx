@@ -7,8 +7,10 @@ export function Footer() {
     <footer className="mt-24 border-t border-border bg-[oklch(0.16_0.05_260)] text-[oklch(0.95_0.01_240)]">
       <div className="container-px mx-auto max-w-7xl py-16 grid gap-10 lg:grid-cols-5">
         <div className="lg:col-span-2">
-          <div className="flex items-center gap-2 font-display font-bold text-xl">
-            <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>G</span>
+          <div className="flex items-center gap-2.5 font-display font-bold text-xl">
+            <div className="w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
+              <img src="/logo.png" alt="GSHRM Payroll Logo" className="w-full h-full object-contain" />
+            </div>
             {SITE.name}
           </div>
           <p className="mt-4 text-sm text-white/70 max-w-sm">{SITE.description}</p>
