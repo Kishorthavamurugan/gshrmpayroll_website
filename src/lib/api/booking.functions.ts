@@ -167,12 +167,34 @@ export const bookDemo = async (args: { data: BookingData }) => {
 
   // Send request to serverless API
   try {
-    const response = await fetch("/api/book-demo", {
+    // Resolve email API endpoint, ensuring the root "/" is never called
+    let endpoint = "/api/book-demo";
+    const customUrl = (import.meta as any).env?.VITE_EMAIL_API_URL?.toString().trim();
+    if (customUrl) {
+      if (customUrl.endsWith("/api/send-email") || customUrl.endsWith("/api/book-demo")) {
+        endpoint = customUrl;
+      } else {
+        const cleanBase = customUrl.replace(/\/+$/, "");
+        endpoint = `${cleanBase}/api/book-demo`;
+      }
+    }
+
+    const payload = {
+      name: data.name,
+      fullName: data.name,
+      company: data.company,
+      email: data.email,
+      workEmail: data.email,
+      phone: data.phone,
+      employees: data.employees,
+    };
+
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
 
     if (response.ok) {
@@ -180,7 +202,7 @@ export const bookDemo = async (args: { data: BookingData }) => {
       if (contentType.includes("application/json")) {
         const result = await response.json();
         if (result.success) {
-          logs.push("Email notification successfully delivered via SMTP.");
+          logs.push(result.message || "Email notification successfully delivered via SMTP.");
         } else {
           errors.push(result.message || "Unable to send email");
         }

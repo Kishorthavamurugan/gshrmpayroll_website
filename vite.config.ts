@@ -10,14 +10,20 @@ const localApiPlugin = () => {
     name: "local-api-plugin",
     configureServer(server: any) {
       server.middlewares.use(async (req: any, res: any, next: any) => {
-        if (req.url === "/api/book-demo" && req.method === "POST") {
+        if ((req.url === "/api/book-demo" || req.url === "/api/send-email") && (req.method === "POST" || req.method === "OPTIONS")) {
+          if (req.method === "OPTIONS") {
+            res.statusCode = 200;
+            res.end();
+            return;
+          }
           try {
             // Read raw body from stream
             const buffers = [];
             for await (const chunk of req) {
               buffers.push(chunk);
             }
-            const body = JSON.parse(Buffer.concat(buffers).toString());
+            const rawBody = Buffer.concat(buffers).toString();
+            const body = rawBody ? JSON.parse(rawBody) : {};
 
             // Mock express-like request and response
             const mockReq = {
@@ -53,7 +59,7 @@ const localApiPlugin = () => {
             console.error("Vite local API dev error:", error);
             res.statusCode = 500;
             res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ success: false, error: error.message }));
+            res.end(JSON.stringify({ success: false, message: error.message || "Unable to send email" }));
           }
           return;
         }
