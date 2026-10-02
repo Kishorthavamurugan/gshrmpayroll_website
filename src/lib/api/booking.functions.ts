@@ -167,16 +167,11 @@ export const bookDemo = async (args: { data: BookingData }) => {
 
   // Send request to serverless API
   try {
-    // Resolve email API endpoint, ensuring the root "/" is never called
-    let endpoint = "/api/book-demo";
-    const customUrl = (import.meta as any).env?.VITE_EMAIL_API_URL?.toString().trim();
-    if (customUrl) {
-      if (customUrl.endsWith("/api/send-email") || customUrl.endsWith("/api/book-demo")) {
-        endpoint = customUrl;
-      } else {
-        const cleanBase = customUrl.replace(/\/+$/, "");
-        endpoint = `${cleanBase}/api/book-demo`;
-      }
+    // Resolve email API endpoint, pointing to your dedicated Vercel API project
+    const defaultUrl = "https://gshrmpayroll-api.vercel.app/api/book-demo";
+    let endpoint = (import.meta as any).env?.VITE_EMAIL_API_URL?.toString().trim() || defaultUrl;
+    if (!endpoint.endsWith("/api/book-demo") && !endpoint.endsWith("/api/send-email")) {
+      endpoint = `${endpoint.replace(/\/+$/, "")}/api/book-demo`;
     }
 
     const payload = {
