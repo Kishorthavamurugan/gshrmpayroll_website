@@ -29,6 +29,8 @@ export default async function handler(req: any, res: any) {
 
   try {
     const transporter = nodemailer.createTransport({
+      pool: true,
+      maxConnections: 3,
       host: smtpHost,
       port: smtpPort,
       secure: smtpSecure,
@@ -41,33 +43,43 @@ export default async function handler(req: any, res: any) {
     const adminEmailHtml = getAdminEmailHtml(data, date, time);
     const customerEmailHtml = getCustomerEmailHtml(data);
 
-    // Send admin notification
-    await transporter.sendMail({
-      from: `"Great Supports GSHRM" <${smtpUser}>`,
-      to: adminEmail || smtpUser,
-      replyTo: data.email,
-      subject: "🚀 New Demo Request - Great Supports GSHRM",
-      html: adminEmailHtml,
-    });
+    // Send emails in parallel asynchronously
+    const emailPromises = [
+      transporter.sendMail({
+        from: `"Great Supports GSHRM" <${smtpUser}>`,
+        to: adminEmail || smtpUser,
+        replyTo: data.email,
+        subject: "🚀 New Demo Request - Great Supports GSHRM",
+        html: adminEmailHtml,
+      }),
+    ];
 
-    // Send confirmation copy to customer
     if (data.email) {
-      try {
-        await transporter.sendMail({
+      emailPromises.push(
+        transporter.sendMail({
           from: `"Great Supports GSHRM" <${smtpUser}>`,
           to: data.email,
           subject: "Thank You for Requesting a Live Demo - Great Supports GSHRM",
           html: customerEmailHtml,
-        });
-      } catch (custErr) {
-        console.warn("Notice: Customer confirmation email delivery skipped:", custErr);
-      }
+        }).catch((err) => {
+          console.warn("[Notice] Customer confirmation email skipped:", err.message);
+          return null as any;
+        })
+      );
     }
 
-    console.log(`[SMTP] Successfully dispatched demo booking emails for ${data.email}`);
+    // Execute in background
+    Promise.all(emailPromises)
+      .then(() => {
+        console.log(`[SMTP] Successfully dispatched emails in background for ${data.email}`);
+      })
+      .catch((err) => {
+        console.error("[SMTP Background Error]:", err.message || err);
+      });
+
+    // Return instant success response to the user within milliseconds!
     return res.status(200).json({ success: true });
   } catch (err: any) {
-    // Log full error details securely on the server for debugging
     console.error("[SMTP Server Error]:", err.message || err);
     return res.status(500).json({ success: false, message: "Unable to send email" });
   }
