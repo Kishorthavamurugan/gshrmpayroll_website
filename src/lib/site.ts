@@ -1,8 +1,8 @@
 export const SITE = {
-  name: "GSHRM Payroll",
+  name: "GREAT SUPPORTS",
   tagline: "India's Smart Payroll & HRMS Software",
   description:
-    "Automate payroll, attendance, compliance, PF, ESI, PT and TDS with GSHRM — the intelligent HRMS platform.",
+    "Automate payroll, attendance, compliance, PF, ESI, PT and TDS with GSHRM by Great Supports — the intelligent HRMS platform trusted by 5,000+ Indian businesses.",
   phone: "+91 98412-79594",
   whatsapp: "919841279594",
   email: "info@greatsupports.in",
@@ -34,10 +34,9 @@ export const NAV = {
     { title: "Logistics", to: "/payroll-for-logistics" },
   ],
   resources: [
-    { title: "Blog", to: "/blog" },
-    { title: "Pricing", to: "/pricing" },
-    { title: "About Us", to: "/about-us" },
-    { title: "Contact", to: "/contact-us" },
+    { title: "About Us", to: "/about-us", desc: "Our mission, vision, and team." },
+    { title: "Contact Us", to: "/contact-us", desc: "Get in touch with our team." },
+    { title: "Compare HRMS", to: "/pricing", desc: "See how GSHRM compares with other tools." },
   ],
 };
 

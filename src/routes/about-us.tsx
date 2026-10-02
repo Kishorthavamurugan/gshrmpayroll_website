@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHero } from "@/components/site/PageHero";
 import { SectionHeading } from "@/components/site/SectionHeading";
-import { Users, Scale, Clock, TrendingUp, BarChart3, RefreshCw } from "lucide-react";
+import { Target, Lightbulb, Compass, Award, Sparkles, BookOpen } from "lucide-react";
 import { SITE } from "@/lib/site";
 
 export const Route = createFileRoute("/about-us")({
@@ -20,37 +20,37 @@ export const Route = createFileRoute("/about-us")({
 
 const methodology = [
   {
-    icon: Users,
-    title: "Strategic Organizational Partnership",
-    desc: "We align deeply with your organization's structure and business goals, acting as a dedicated partner in driving seamless workforce coordination and structural efficiency.",
+    icon: Lightbulb,
+    title: "Dream Big",
+    desc: "We look at industry challenges through our customers' eyes and build solutions that redefine how payroll and HR work.",
   },
   {
-    icon: Scale,
-    title: "100% Legal & Regulatory Compliance",
-    desc: "Guaranteeing absolute adherence to statutory labor codes, tax laws, and regional regulations with zero tolerance for calculation discrepancies or filing errors.",
+    icon: Compass,
+    title: "Be Fearless",
+    desc: "We embrace new technologies, intuitive user interfaces, and bold decisions to make payroll execution zero-friction.",
   },
   {
-    icon: Clock,
-    title: "24/7 Dedicated Support Ecosystem",
-    desc: "Access round-the-clock professional assistance from HR and payroll specialists to ensure your critical operations run seamlessly with zero downtime.",
+    icon: Target,
+    title: "Focus on Impact",
+    desc: "We don't build features just to build them. We build tools that save time, automate compliance, and solve real HR workflows.",
   },
 ];
 
 const values = [
   {
-    icon: TrendingUp,
-    title: "100% Cost Control & Optimization",
-    desc: "Unlock comprehensive visibility into workforce expenses, eliminate budget leaks, minimize administrative overhead, and maximize your operational ROI.",
+    icon: Sparkles,
+    title: "Improve Every Day",
+    desc: "A commitment to learning, self-development, and raising the bar for our product and customer support operations.",
   },
   {
-    icon: BarChart3,
-    title: "100% Human Capital & Value Analytics",
-    desc: "Gain deep, actionable insights into team productivity, workforce dynamics, and employee sentiment to maximize organizational potential and value.",
+    icon: Award,
+    title: "Deliver Excellence",
+    desc: "Ensuring top-tier standards in data security, calculation accuracy, server performance, and design aesthetics.",
   },
   {
-    icon: RefreshCw,
-    title: "Dynamically Updated Core Technologies",
-    desc: "Stay at the forefront with a cloud-native platform that updates automatically to support the latest security protocols, speed upgrades, and modern features.",
+    icon: BookOpen,
+    title: "Nurture Learning & Sharing",
+    desc: "Fostering an open, collaborative environment built on mutual trust, shared goals, and helping each other grow.",
   },
 ];
 

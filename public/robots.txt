@@ -20,4 +20,4 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-Sitemap: https://gshrmpayroll.com/sitemap.xml
+Sitemap: https://gshrmpayroll.lovable.app/sitemap.xml

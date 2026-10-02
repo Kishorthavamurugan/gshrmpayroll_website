@@ -7,13 +7,9 @@ import { useState, useMemo } from "react";
 import { SITE } from "@/lib/site";
 
 const faqs = [
-  {
-    q: "How does the 2-month free trial work?",
-    a: "All our plans (Starter, Essential, Growth, Custom) include a 2-month free trial. You can set up your account, onboard your employees, and run payroll completely free for the first 2 months. You will only be billed starting from the 3rd month, and you can cancel anytime during the trial with no questions asked."
-  },
   { 
     q: "How does the per-employee pricing work?", 
-    a: "Our Starter plan includes up to 10 employees. Our Essential and Growth plans include up to 50 employees in their base price. For teams larger than 50 on Essential or Growth, a per-employee monthly fee (+₹45 for Essential, +₹85 for Growth) applies only to the additional active employees." 
+    a: "Our Essential and Growth plans include up to 50 employees in their base price. For teams larger than 50, a per-employee monthly fee (+₹45 for Essential, +₹85 for Growth) applies only to the additional active employees." 
   },
   { 
     q: "Is there a free setup or onboarding cost?", 
@@ -37,9 +33,9 @@ export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
       { title: `Transparent Pricing Plans | ${SITE.name}` },
-      { name: "description", content: "Explore GSHRM's transparent pricing. Choose from Starter, Essential, Growth, or Custom packages. Use our calculator to get an instant cost estimate." },
+      { name: "description", content: "Explore GSHRM's transparent pricing. Choose from Starter, Essential, or Growth packages. Use our calculator to get an instant cost estimate." },
       { property: "og:title", content: `${SITE.name} Pricing Plans` },
-      { property: "og:description", content: "Transparent pricing. 2-month free trial on all plans. Save 20% on annual billing." },
+      { property: "og:description", content: "Transparent pricing. 14-day free trial. Save 20% on annual billing." },
       { property: "og:url", content: "/pricing" },
     ],
     links: [{ rel: "canonical", href: "/pricing" }],
@@ -56,8 +52,6 @@ function Pricing() {
     const isAnnual = billingCycle === "annual";
     
     // Pricing configuration (with 20% off for annual)
-    const starterBase = 999;
-    
     const essentialBase = isAnnual ? 1995 : 2495;
     const essentialPerEmp = isAnnual ? 36 : 45;
     
@@ -74,7 +68,6 @@ function Pricing() {
       : growthBase + (employees - 50) * growthPerEmp;
 
     return {
-      starterBase,
       essentialBase,
       essentialPerEmp,
       growthBase,
@@ -94,7 +87,7 @@ function Pricing() {
 
       {/* PRICING CALCULATOR */}
       <section className="section-y bg-background -mt-16 relative z-10">
-        <div className="container-px mx-auto max-w-7xl">
+        <div className="container-px mx-auto max-w-5xl">
           <div className="surface-card p-6 md:p-8 border border-border shadow-lg bg-surface mb-12">
             <div className="flex items-center gap-2 mb-6">
               <Calculator className="w-5 h-5 text-primary" />
@@ -147,45 +140,7 @@ function Pricing() {
           </div>
 
           {/* PLAN CARDS */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Starter Plan */}
-            <div className="surface-card p-8 border border-border bg-surface flex flex-col justify-between h-full hover-lift shadow-sm relative">
-              <div>
-                <h4 className="font-bold text-xl text-foreground">Starter</h4>
-                <p className="mt-2 text-sm text-muted-foreground min-h-[40px]">For micro businesses starting their HR & payroll automation journey.</p>
-                <div className="mt-6 flex items-baseline gap-1">
-                  {employees <= 10 ? (
-                    <>
-                      <span className="text-4xl font-extrabold text-foreground">₹{pricingDetails.starterBase.toLocaleString("en-IN")}</span>
-                      <span className="text-xs text-muted-foreground font-medium">/ month</span>
-                    </>
-                  ) : (
-                    <div className="text-sm font-semibold text-amber-600 min-h-[40px] flex items-center">
-                      Upgrade to Essential
-                    </div>
-                  )}
-                </div>
-                <div className="text-xs text-muted-foreground font-semibold mt-2">
-                  Base structure includes 10 employees. <br />
-                  <span className="text-primary">2 Months Free Trial included</span>
-                </div>
-
-                <ul className="mt-8 space-y-3.5 border-t border-border/40 pt-6">
-                  {["Core HR & standard payroll", "Employee database (Max 10)", "Secure digital document locker", "Free onboarding & setup", "Email support"].map((f) => (
-                    <li key={f} className="flex items-start gap-2.5 text-xs text-muted-foreground">
-                      <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mt-8">
-                <Link to="/contact-us" className="inline-flex w-full justify-center px-5 py-2.5 rounded-full border border-border font-semibold hover:bg-muted text-sm transition-colors text-foreground">
-                  Start 2-Month Free Trial
-                </Link>
-              </div>
-            </div>
-
+          <div className="grid md:grid-cols-3 gap-6">
             {/* Essential Plan */}
             <div className="surface-card p-8 border border-border bg-surface flex flex-col justify-between h-full hover-lift shadow-sm relative">
               <div>
@@ -211,7 +166,7 @@ function Pricing() {
               </div>
               <div className="mt-8">
                 <Link to="/contact-us" className="inline-flex w-full justify-center px-5 py-2.5 rounded-full border border-border font-semibold hover:bg-muted text-sm transition-colors text-foreground">
-                  Start 2-Month Free Trial
+                  Start 14-Day Free Trial
                 </Link>
               </div>
             </div>
@@ -244,7 +199,7 @@ function Pricing() {
               </div>
               <div className="mt-8">
                 <Link to="/contact-us" className="btn-hero text-sm w-full justify-center">
-                  Start 2-Month Free Trial
+                  Book a Live Demo
                 </Link>
               </div>
             </div>
@@ -270,7 +225,7 @@ function Pricing() {
               </div>
               <div className="mt-8">
                 <Link to="/contact-us" className="inline-flex w-full justify-center px-5 py-2.5 rounded-full border border-border font-semibold hover:bg-muted text-sm transition-colors text-foreground">
-                  Get a Custom Quote (2 Months Free)
+                  Get a Custom Quote
                 </Link>
               </div>
             </div>
@@ -288,20 +243,18 @@ function Pricing() {
               <thead>
                 <tr className="text-left bg-surface-elevated">
                   <th className="p-4 text-sm font-semibold text-muted-foreground">Feature Module</th>
-                  <th className="p-4 text-sm font-bold text-center text-foreground w-[18%]">Starter</th>
-                  <th className="p-4 text-sm font-bold text-center text-foreground w-[18%]">Essential</th>
-                  <th className="p-4 text-sm font-bold text-center text-foreground w-[18%]">Growth</th>
-                  <th className="p-4 text-sm font-bold text-center text-foreground w-[18%]">Custom</th>
+                  <th className="p-4 text-sm font-bold text-center text-foreground w-[20%]">Essential</th>
+                  <th className="p-4 text-sm font-bold text-center text-foreground w-[20%]">Growth</th>
+                  <th className="p-4 text-sm font-bold text-center text-foreground w-[20%]">Custom</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
                 {/* Section header */}
                 <tr className="bg-muted/30">
-                  <td colSpan={5} className="p-3 text-xs font-bold uppercase tracking-wider text-primary">Core HR & Payroll</td>
+                  <td colSpan={4} className="p-3 text-xs font-bold uppercase tracking-wider text-primary">Core HR & Payroll</td>
                 </tr>
                 <tr>
                   <td className="p-4 text-sm font-medium text-foreground">Employee Database</td>
-                  <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
@@ -311,11 +264,9 @@ function Pricing() {
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
-                  <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
                 </tr>
                 <tr>
                   <td className="p-4 text-sm font-medium text-foreground">Statutory PF & ESI Calcs</td>
-                  <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
@@ -323,25 +274,22 @@ function Pricing() {
 
                 {/* Section header */}
                 <tr className="bg-muted/30">
-                  <td colSpan={5} className="p-3 text-xs font-bold uppercase tracking-wider text-primary">Support & Services</td>
+                  <td colSpan={4} className="p-3 text-xs font-bold uppercase tracking-wider text-primary">Support & Services</td>
                 </tr>
                 <tr>
                   <td className="p-4 text-sm font-medium text-foreground">Email Ticketing Helpdesk</td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
-                  <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
                 </tr>
                 <tr>
                   <td className="p-4 text-sm font-medium text-foreground">WhatsApp support (24x7)</td>
-                  <td className="p-4 text-center"><X className="w-4 h-4 text-muted-foreground/30 inline" /></td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
                 </tr>
                 <tr>
                   <td className="p-4 text-sm font-medium text-foreground">Dedicated Customer Success</td>
-                  <td className="p-4 text-center"><X className="w-4 h-4 text-muted-foreground/30 inline" /></td>
                   <td className="p-4 text-center"><X className="w-4 h-4 text-muted-foreground/30 inline" /></td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>
                   <td className="p-4 text-center"><Check className="w-4 h-4 text-emerald-500 inline" /></td>

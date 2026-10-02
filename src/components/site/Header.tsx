@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown, ArrowRight } from "lucide-react";
 import { NAV, SITE } from "@/lib/site";
+import { Logo } from "./Logo";
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -18,50 +19,62 @@ export function Header() {
     <header
       className={`sticky top-0 z-50 transition-all ${
         scrolled
-          ? "bg-background/80 backdrop-blur-xl border-b border-border shadow-[0_1px_0_0_var(--color-border)]"
+          ? "bg-white/90 backdrop-blur-xl border-b border-emerald-100 shadow-sm"
           : "bg-transparent"
       }`}
     >
-      <div className="container-px mx-auto max-w-7xl flex items-center justify-between h-16 md:h-20">
-        <Link to="/" className="flex items-center gap-2.5 font-display font-bold text-lg">
-          <div className="w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
-            <img src="/logo.png" alt="GSHRM Payroll Logo" className="w-full h-full object-contain" />
-          </div>
-          <span className="tracking-tight">{SITE.name}</span>
+      <div className="container-px mx-auto max-w-7xl flex items-center justify-between h-20">
+        <Link to="/" className="flex items-center gap-2 group">
+          <Logo size="md" />
         </Link>
 
-        <nav className="hidden lg:flex items-center gap-1">
+        <nav className="hidden lg:flex items-center gap-2">
           <MegaItem label="Products" items={NAV.products} />
           <MegaItem label="Industries" items={NAV.industries.map(i => ({ ...i, desc: "" }))} columns={2} />
-          <Link to="/pricing" className="px-4 py-2 text-sm font-medium text-foreground/80 hover:text-foreground rounded-md">Pricing</Link>
-          <Link to="/blog" className="px-4 py-2 text-sm font-medium text-foreground/80 hover:text-foreground rounded-md">Blog</Link>
-          <Link to="/about-us" className="px-4 py-2 text-sm font-medium text-foreground/80 hover:text-foreground rounded-md">About</Link>
-          <Link to="/contact-us" className="px-4 py-2 text-sm font-medium text-foreground/80 hover:text-foreground rounded-md">Contact Us</Link>
+          <Link to="/pricing" className="px-3.5 py-2 text-sm font-semibold text-slate-700 hover:text-[#008269] transition-colors rounded-lg">
+            Pricing
+          </Link>
+          <Link to="/blog" className="px-3.5 py-2 text-sm font-semibold text-slate-700 hover:text-[#008269] transition-colors rounded-lg">
+            Blog
+          </Link>
+          <MegaItem label="Resources" items={NAV.resources} />
         </nav>
 
         <div className="hidden lg:flex items-center gap-3">
-          <Link to="/book-demo" className="btn-hero text-sm">Book Free Demo</Link>
+          <Link
+            to="/book-demo"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-[#006e5b] via-[#008a6e] to-[#00a87d] shadow-md shadow-[#008a6e]/25 hover:shadow-lg hover:shadow-[#008a6e]/40 hover:-translate-y-0.5 active:translate-y-0 transition-all"
+          >
+            <span>Book a Live Demo</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
 
         <button
-          className="lg:hidden p-2 rounded-md border border-border"
+          className="lg:hidden p-2 rounded-lg border border-emerald-100 text-slate-700 hover:bg-emerald-50"
           onClick={() => setOpen(!open)}
           aria-label="Toggle menu"
         >
-          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 
       {open && (
-        <div className="lg:hidden border-t border-border bg-background">
+        <div className="lg:hidden border-t border-emerald-100 bg-white/95 backdrop-blur-lg">
           <div className="container-px mx-auto max-w-7xl py-4 grid gap-2 text-sm">
             <MobileGroup label="Products" items={NAV.products} onNav={() => setOpen(false)} />
             <MobileGroup label="Industries" items={NAV.industries} onNav={() => setOpen(false)} />
-            <Link to="/pricing" onClick={() => setOpen(false)} className="px-3 py-2 rounded-md hover:bg-muted">Pricing</Link>
-            <Link to="/blog" onClick={() => setOpen(false)} className="px-3 py-2 rounded-md hover:bg-muted">Blog</Link>
-            <Link to="/about-us" onClick={() => setOpen(false)} className="px-3 py-2 rounded-md hover:bg-muted">About</Link>
-            <Link to="/contact-us" onClick={() => setOpen(false)} className="px-3 py-2 rounded-md hover:bg-muted">Contact Us</Link>
-            <Link to="/book-demo" onClick={() => setOpen(false)} className="btn-hero mt-2 font-semibold">Book Free Demo</Link>
+            <Link to="/pricing" onClick={() => setOpen(false)} className="px-3 py-2 rounded-md font-medium hover:bg-emerald-50 text-slate-700">Pricing</Link>
+            <Link to="/blog" onClick={() => setOpen(false)} className="px-3 py-2 rounded-md font-medium hover:bg-emerald-50 text-slate-700">Blog</Link>
+            <MobileGroup label="Resources" items={NAV.resources} onNav={() => setOpen(false)} />
+            <Link
+              to="/book-demo"
+              onClick={() => setOpen(false)}
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-[#006e5b] to-[#00a87d] mt-2 shadow-md"
+            >
+              <span>Book a Live Demo</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       )}

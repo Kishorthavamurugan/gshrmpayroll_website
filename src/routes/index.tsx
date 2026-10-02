@@ -48,6 +48,7 @@ import { SectionHeading } from "@/components/site/SectionHeading";
 import { FAQ, faqSchema } from "@/components/site/FAQ";
 import { SITE } from "@/lib/site";
 import { DemoForm } from "@/components/site/DemoForm";
+import { HeroLaptopMockup } from "@/components/site/HeroLaptopMockup";
 
 const homeFaqs = [
   {
@@ -324,98 +325,212 @@ function useCounter(target: number, duration = 1500) {
 }
 
 function Home() {
+  const [videoOpen, setVideoOpen] = useState(false);
+
   return (
     <>
-      {/* HERO — light, Zoho-style */}
-      <section className="relative overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
-        <div
-          className="absolute inset-0 pointer-events-none opacity-[0.35]"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 1px 1px, rgba(30,64,175,0.15) 1px, transparent 0)",
-            backgroundSize: "22px 22px",
-            maskImage: "linear-gradient(180deg, black 0%, transparent 80%)",
-          }}
-        />
-        <div className="container-px mx-auto max-w-7xl pt-14 md:pt-20 pb-16 md:pb-24 grid lg:grid-cols-2 gap-12 items-center relative">
-          <div className="animate-fade-in-up">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5" /> Made in India · Built for Indian compliance
-            </div>
-            <h1 className="mt-5 text-4xl md:text-5xl lg:text-[3.5rem] leading-[1.05] font-bold tracking-tight">
-              India's <span className="text-gradient">smart payroll</span> & HRMS platform
-            </h1>
-            <p className="mt-5 text-lg text-muted-foreground max-w-xl">
-              Automate payroll, attendance, PF, ESI, PT and TDS from one intelligent platform.
-              Trusted by 5,000+ Indian businesses.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/contact-us" className="btn-hero">
-                Book Free Demo <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
-                to="/pricing"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full font-semibold border border-border bg-surface hover:bg-surface-elevated transition-colors"
-              >
-                <PlayCircle className="w-4 h-4" /> Watch product tour
-              </Link>
-            </div>
-            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-accent" /> No credit card
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-accent" /> 14-day free trial
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-accent" /> Setup in 48 hrs
-              </span>
-            </div>
-          </div>
-          <div className="relative animate-fade-in-up">
-            {/* Soft background glow */}
-            <div className="absolute -inset-4 rounded-3xl bg-gradient-to-tr from-primary/20 via-primary-glow/10 to-transparent blur-2xl pointer-events-none" />
+      {/* HERO — Great Supports Emerald Wave Style */}
+      <section className="relative overflow-hidden pt-8 pb-14 md:pt-14 md:pb-20 bg-gradient-to-b from-[#f3faf7] via-[#ffffff] to-[#eef8f4]">
+        
+        {/* Ambient Luminous Emerald Waves in Background */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* Top-right glow orb */}
+          <div className="absolute -top-24 right-0 w-[600px] h-[500px] bg-gradient-to-bl from-[#34d399]/20 via-[#059669]/10 to-transparent blur-3xl rounded-full" />
+          {/* Bottom-left flowing wave glow */}
+          <div className="absolute -bottom-32 -left-20 w-[650px] h-[550px] bg-gradient-to-tr from-[#008269]/15 via-[#00c48c]/10 to-transparent blur-3xl rounded-full" />
+          
+          {/* Abstract SVG Flowing Wave Ribbons matching the template image */}
+          <svg
+            className="absolute bottom-0 left-0 w-full h-[380px] opacity-25"
+            viewBox="0 0 1440 380"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="M-100 280 C300 120, 600 360, 950 180 C1200 60, 1400 200, 1600 140 L1600 400 L-100 400 Z"
+              fill="url(#wave-gradient-1)"
+            />
+            <path
+              d="M-50 320 C250 180, 550 340, 850 220 C1150 100, 1350 240, 1550 190 L1550 400 L-50 400 Z"
+              fill="url(#wave-gradient-2)"
+              opacity="0.7"
+            />
+            <defs>
+              <linearGradient id="wave-gradient-1" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#00b884" />
+                <stop offset="50%" stopColor="#008269" />
+                <stop offset="100%" stopColor="#2dd4bf" />
+              </linearGradient>
+              <linearGradient id="wave-gradient-2" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#a7f3d0" />
+                <stop offset="50%" stopColor="#059669" />
+                <stop offset="100%" stopColor="#008269" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
 
-            {/* HTML Browser Mockup Wrapper */}
-            <div className="relative rounded-2xl border border-border shadow-[var(--shadow-lg)] bg-surface-elevated overflow-hidden w-full">
-              {/* Browser Header Bar */}
-              <div className="h-9 bg-surface border-b border-border flex items-center px-4 gap-2 select-none">
-                {/* Window Controls */}
-                <div className="flex gap-1.5 shrink-0">
-                  <span className="w-3 h-3 rounded-full bg-rose-400/80 inline-block" />
-                  <span className="w-3 h-3 rounded-full bg-amber-400/80 inline-block" />
-                  <span className="w-3 h-3 rounded-full bg-emerald-400/80 inline-block" />
-                </div>
-
-                {/* Address Bar */}
-                <div className="mx-auto w-2/3 max-w-[320px] h-6 rounded bg-muted/60 border border-border/60 text-[10px] text-muted-foreground flex items-center justify-center font-mono gap-1.5 px-3 truncate">
-                  <span className="text-emerald-500 shrink-0">🔒</span>
-                  <span className="truncate">gspay.gshrm.in/dashboard</span>
-                </div>
-
-                {/* Balance spacer */}
-                <div className="w-12 shrink-0" />
+        <div className="container-px mx-auto max-w-7xl relative z-10">
+          <div className="grid lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+            
+            {/* Left Column: Hero Text & Dual CTAs */}
+            <div className="lg:col-span-6 animate-fade-in-up">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#d7f7ee] text-[#007357] text-xs font-bold border border-[#99ebd6]/80 shadow-2xs">
+                <Sparkles className="w-3.5 h-3.5 text-[#009b77]" />
+                <span className="tracking-wide">All-in-One Payroll & HRMS</span>
               </div>
 
-              {/* Dashboard Screenshot */}
-              <img
-                src={heroImg}
-                alt="GSHRM Payroll dashboard"
-                width={1024}
-                height={485}
-                className="w-full h-auto bg-white block"
-              />
+              {/* Main Headline */}
+              <h1 className="mt-5 text-4xl sm:text-5xl lg:text-[3.5rem] xl:text-[3.75rem] leading-[1.08] font-black text-slate-900 tracking-tight">
+                Experience the <br />
+                <span className="bg-gradient-to-r from-[#008269] via-[#00a87d] to-[#00c98f] bg-clip-text text-transparent">
+                  future of payroll
+                </span>
+              </h1>
+
+              {/* Subheading */}
+              <p className="mt-5 text-base sm:text-lg text-slate-600 max-w-xl leading-relaxed">
+                See how India's smart payroll & HRMS platform can help you run payroll in under 3 minutes, eliminate errors, and automate tax calculations.
+              </p>
+
+              {/* Action Buttons */}
+              <div className="mt-8 flex flex-wrap items-center gap-4">
+                <Link
+                  to="/book-demo"
+                  className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full font-bold text-base text-white bg-gradient-to-r from-[#006e5b] via-[#008a6e] to-[#00a87d] shadow-lg shadow-[#008a6e]/30 hover:shadow-xl hover:shadow-[#008a6e]/40 hover:-translate-y-0.5 active:translate-y-0 transition-all"
+                >
+                  <span>Book a Live Demo</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => setVideoOpen(true)}
+                  className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-full font-bold text-base text-[#006e5b] bg-white/95 hover:bg-white border border-[#00a87d]/40 shadow-sm hover:shadow-md hover:border-[#00a87d] hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+                >
+                  <span className="w-6 h-6 rounded-full bg-[#009b77] text-white grid place-items-center">
+                    <PlayCircle className="w-4 h-4 fill-white text-[#009b77]" />
+                  </span>
+                  <span>Watch Video</span>
+                </button>
+              </div>
+
+              {/* Highlights below buttons */}
+              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs md:text-sm font-medium text-slate-600">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-[#00a87d]" /> No credit card required
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-[#00a87d]" /> 14-day free trial
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-[#00a87d]" /> Setup in 48 hrs
+                </span>
+              </div>
+            </div>
+
+            {/* Right Column: Interactive Laptop Dashboard Mockup */}
+            <div className="lg:col-span-6 relative animate-fade-in-up">
+              <HeroLaptopMockup />
+            </div>
+          </div>
+
+          {/* Bottom 4 Feature Cards (Frosted Glass / Emerald Badges) */}
+          <div className="mt-14 md:mt-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+            {/* Card 1: 15-Minute Walkthrough */}
+            <div className="bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-emerald-100/80 shadow-[0_10px_30px_-10px_rgba(0,130,105,0.08)] hover:shadow-[0_15px_35px_-10px_rgba(0,130,105,0.18)] hover:-translate-y-1 transition-all flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00a87d] to-[#005f4d] text-white grid place-items-center shrink-0 shadow-md shadow-[#00a87d]/20">
+                <Clock className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm md:text-base tracking-tight">15-Minute Walkthrough</h4>
+                <p className="mt-1 text-xs text-slate-600 leading-relaxed">
+                  Quick, customized product tour matching your industry's exact pay slabs.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 2: Compliances Handled */}
+            <div className="bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-emerald-100/80 shadow-[0_10px_30px_-10px_rgba(0,130,105,0.08)] hover:shadow-[0_15px_35px_-10px_rgba(0,130,105,0.18)] hover:-translate-y-1 transition-all flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00a87d] to-[#005f4d] text-white grid place-items-center shrink-0 shadow-md shadow-[#00a87d]/20">
+                <Shield className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm md:text-base tracking-tight">Compliances Handled</h4>
+                <p className="mt-1 text-xs text-slate-600 leading-relaxed">
+                  See automatic generation of ready-to-file PF, ESI, PT, and TDS challans.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 3: Automate Payroll */}
+            <div className="bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-emerald-100/80 shadow-[0_10px_30px_-10px_rgba(0,130,105,0.08)] hover:shadow-[0_15px_35px_-10px_rgba(0,130,105,0.18)] hover:-translate-y-1 transition-all flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00a87d] to-[#005f4d] text-white grid place-items-center shrink-0 shadow-md shadow-[#00a87d]/20">
+                <Calculator className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm md:text-base tracking-tight">Automate Payroll</h4>
+                <p className="mt-1 text-xs text-slate-600 leading-relaxed">
+                  Eliminate manual errors and save hours with automated calculations.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 4: Real-Time Reports */}
+            <div className="bg-white/80 backdrop-blur-md p-5 rounded-2xl border border-emerald-100/80 shadow-[0_10px_30px_-10px_rgba(0,130,105,0.08)] hover:shadow-[0_15px_35px_-10px_rgba(0,130,105,0.18)] hover:-translate-y-1 transition-all flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00a87d] to-[#005f4d] text-white grid place-items-center shrink-0 shadow-md shadow-[#00a87d]/20">
+                <BarChart3 className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm md:text-base tracking-tight">Real-Time Reports</h4>
+                <p className="mt-1 text-xs text-slate-600 leading-relaxed">
+                  Get instant insights with powerful and customizable reports.
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* TRUST BAR */}
-      <section className="border-y border-border bg-surface-elevated">
-        <div className="container-px mx-auto max-w-2xl py-10 grid grid-cols-2 gap-8">
-          <Stat staticValue="99.9%" label="Payroll Accuracy" />
-          <Stat staticValue="24/7" label="Support" />
-        </div>
+        {/* Video Tour Modal */}
+        {videoOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in-up">
+            <div className="relative w-full max-w-4xl bg-slate-900 rounded-2xl overflow-hidden border border-emerald-500/30 shadow-2xl">
+              <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-950">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-emerald-500" />
+                  <span className="font-bold text-white text-sm">Great Supports GSHRM Product Walkthrough</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setVideoOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="aspect-video bg-black flex items-center justify-center p-8 text-center text-white">
+                <div className="space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-[#00a87d]/20 text-[#00d099] grid place-items-center mx-auto border border-[#00a87d]/40">
+                    <PlayCircle className="w-8 h-8 fill-[#00a87d] text-black" />
+                  </div>
+                  <h3 className="text-xl font-bold">Watch Great Supports 3-Minute Interactive Tour</h3>
+                  <p className="text-slate-400 text-sm max-w-md mx-auto">
+                    Experience automated Indian statutory payroll processing, one-click bank payouts, and smart attendance.
+                  </p>
+                  <Link
+                    to="/book-demo"
+                    onClick={() => setVideoOpen(false)}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm text-white bg-[#008269] hover:bg-[#009b77]"
+                  >
+                    Schedule Live Interactive Demo <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* CAPABILITIES GRID */}
