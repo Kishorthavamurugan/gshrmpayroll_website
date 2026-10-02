@@ -1,197 +1,127 @@
 import nodemailer from "nodemailer";
-import { waitUntil } from "@vercel/functions";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
     res.setHeader("Allow", ["POST"]);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+    return res.status(405).json({ success: false, message: `Method ${req.method} Not Allowed` });
   }
 
   const data = req.body;
   if (!data || !data.email) {
-    return res.status(400).json({ success: false, error: "Missing required fields" });
+    return res.status(400).json({ success: false, message: "Missing required fields" });
   }
 
-  // Retrieve environment variables from the server environment
+  // Retrieve environment variables securely on the server side
   const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
-  const smtpPort = parseInt(process.env.SMTP_PORT || "465", 10);
-  const smtpSecure = process.env.SMTP_SECURE !== "false";
+  const smtpPort = Number(process.env.SMTP_PORT) || 465;
+  const smtpSecure = process.env.SMTP_SECURE === "true" || smtpPort === 465;
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS ? process.env.SMTP_PASS.replace(/\s+/g, "") : undefined;
+  const adminEmail = process.env.ADMIN_EMAIL;
 
-  const resendApiKey = process.env.RESEND_API_KEY;
-  const resendFromEmail = process.env.RESEND_FROM_EMAIL || "info@greatsupports.in";
-  const adminEmail = process.env.ADMIN_EMAIL || "kishorthavamurugan@gmail.com, masskishor143l@gmail.com, info@greatsupports.in, ganishv2@gmail.com, shivagk729@hotmail.com";
-
-  const logs: string[] = [];
-  const errors: string[] = [];
+  if (!smtpUser || !smtpPass) {
+    console.error("Server Configuration Error: Missing SMTP_USER or SMTP_PASS environment variables.");
+    return res.status(500).json({ success: false, message: "Unable to send email" });
+  }
 
   const date = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" });
   const time = new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" });
 
-  // 1. SMTP Sending (Gmail)
-  if (smtpUser && smtpPass) {
-    try {
-      const transporter = nodemailer.createTransport({
-        pool: true,
-        host: smtpHost,
-        port: smtpPort,
-        secure: smtpSecure,
-        auth: {
-          user: smtpUser,
-          pass: smtpPass,
-        },
-        tls: {
-          rejectUnauthorized: false,
-        },
-      });
+  try {
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    });
 
-      const adminEmailHtml = getAdminEmailHtml(data, date, time);
-      const customerEmailHtml = getCustomerEmailHtml(data);
+    const adminEmailHtml = getAdminEmailHtml(data, date, time);
+    const customerEmailHtml = getCustomerEmailHtml(data);
 
-      // Trigger the email dispatches asynchronously without awaiting them
-      const emailPromise = Promise.all([
-        transporter.sendMail({
-          from: `"GSHRM Payroll" <${smtpUser}>`,
-          to: adminEmail, // Send to all admins at once using a comma-separated string
-          subject: "🚀 New Demo Request - GSHRM Payroll",
-          html: adminEmailHtml,
-        }),
-        transporter.sendMail({
-          from: `"GSHRM Payroll" <${smtpUser}>`,
+    // Send admin notification
+    await transporter.sendMail({
+      from: `"Great Supports GSHRM" <${smtpUser}>`,
+      to: adminEmail || smtpUser,
+      replyTo: data.email,
+      subject: "🚀 New Demo Request - Great Supports GSHRM",
+      html: adminEmailHtml,
+    });
+
+    // Send confirmation copy to customer
+    if (data.email) {
+      try {
+        await transporter.sendMail({
+          from: `"Great Supports GSHRM" <${smtpUser}>`,
           to: data.email,
-          subject: "Thank You for Requesting a Live Demo",
+          subject: "Thank You for Requesting a Live Demo - Great Supports GSHRM",
           html: customerEmailHtml,
-        })
-      ]).then(() => {
-        console.log("Background SMTP emails successfully sent.");
-      }).catch(err => {
-        console.error("Background SMTP Error:", err);
-      });
-
-      // Keep the execution context alive in serverless environments until emails are sent
-      waitUntil(emailPromise);
-      logs.push(`Enquiry received. Emails dispatching in background.`);
-
-    } catch (err: any) {
-      console.error("SMTP Error:", err);
-      errors.push(`SMTP error: ${err.message || err}`);
-    }
-  } 
-  // 2. Resend Sending
-  else if (resendApiKey) {
-    try {
-      const isSandbox = resendFromEmail.includes("onboarding@resend.dev");
-      const adminEmailHtml = getAdminEmailHtml(data, date, time);
-      const adminEmails = adminEmail.split(",").map((e: string) => e.trim()).filter(Boolean);
-      const customerEmailHtml = getCustomerEmailHtml(data);
-
-      const promises = [
-        sendResendEmail({
-          apiKey: resendApiKey,
-          from: `GSHRM Payroll <${resendFromEmail}>`,
-          to: adminEmails, // Resend accepts arrays of email strings
-          subject: "🚀 New Demo Request - GSHRM Payroll",
-          html: adminEmailHtml,
-        })
-      ];
-
-      if (!isSandbox) {
-        promises.push(
-          sendResendEmail({
-            apiKey: resendApiKey,
-            from: `GSHRM Payroll <${resendFromEmail}>`,
-            to: data.email,
-            subject: "Thank You for Requesting a Live Demo",
-            html: customerEmailHtml,
-          })
-        );
+        });
+      } catch (custErr) {
+        console.warn("Notice: Customer confirmation email delivery skipped:", custErr);
       }
-
-      const emailPromise = Promise.all(promises).then(() => {
-        console.log("Background Resend emails successfully sent.");
-      }).catch(err => {
-        console.error("Background Resend Error:", err);
-      });
-
-      // Keep the execution context alive in serverless environments until emails are sent
-      waitUntil(emailPromise);
-      logs.push(`Enquiry received. Emails dispatching in background.`);
-    } catch (err: any) {
-      console.error("Resend Error:", err);
-      errors.push(`Resend error: ${err.message || err}`);
     }
-  } else {
-    errors.push("No email configuration found on server (set SMTP_USER/PASS or RESEND_API_KEY).");
-  }
 
-  if (errors.length > 0) {
-    return res.status(500).json({ success: false, error: errors.join(", "), logs });
-  }
-
-  return res.status(200).json({ success: true, logs });
-}
-
-// Resend fetch client helper
-async function sendResendEmail({ apiKey, from, to, subject, html }: any) {
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to: typeof to === "string" && to.includes(",")
-        ? to.split(",").map((email) => email.trim())
-        : to,
-      subject,
-      html,
-    }),
-  });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Resend API Error: ${errText}`);
+    console.log(`[SMTP] Successfully dispatched demo booking emails for ${data.email}`);
+    return res.status(200).json({ success: true });
+  } catch (err: any) {
+    // Log full error details securely on the server for debugging
+    console.error("[SMTP Server Error]:", err.message || err);
+    return res.status(500).json({ success: false, message: "Unable to send email" });
   }
 }
 
-// Templates
+// Admin Notification HTML Template
 function getAdminEmailHtml(data: any, date: string, time: string) {
   return `
-    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
-      <div style="background-color: #0052CC; padding: 32px; border-radius: 8px 8px 0 0; text-align: center; color: white;">
-        <h2 style="margin: 0; font-size: 24px; font-weight: 700; color: white;">GSHRM Payroll</h2>
-        <p style="margin: 8px 0 0; opacity: 0.9; font-size: 14px;">New Demo Request Received</p>
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2ede8; border-radius: 16px; background-color: #ffffff;">
+      <div style="background: linear-gradient(135deg, #006e5b, #00a87d); padding: 28px; border-radius: 12px; text-align: center; color: white;">
+        <h2 style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; color: white;">GREAT SUPPORTS GSHRM</h2>
+        <p style="margin: 6px 0 0; opacity: 0.92; font-size: 14px;">New Live Demo Request</p>
       </div>
-      <div style="padding: 24px; color: #1e293b;">
-        <p>Hello Team,</p>
-        <p>A new visitor has requested a live demo. Details:</p>
-        <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
-          <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px 0; font-weight: 600; width: 140px;">Name</td><td>${data.name}</td></tr>
-          <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px 0; font-weight: 600;">Company</td><td>${data.company}</td></tr>
-          <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px 0; font-weight: 600;">Email</td><td>${data.email}</td></tr>
-          <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px 0; font-weight: 600;">Phone</td><td>${data.phone}</td></tr>
-          <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px 0; font-weight: 600;">Employees</td><td>${data.employees}</td></tr>
-          <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px 0; font-weight: 600;">Date</td><td>${date}</td></tr>
-          <tr><td style="padding: 10px 0; font-weight: 600;">Time</td><td>${time}</td></tr>
+      <div style="padding: 24px 8px; color: #1e293b;">
+        <p style="font-size: 15px; margin-top: 0;">Hello Team,</p>
+        <p style="font-size: 14px; color: #475569;">A new lead has submitted a demo request through the website:</p>
+        <table style="width: 100%; font-size: 14px; border-collapse: collapse; margin-top: 16px;">
+          <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px 0; font-weight: 600; color: #006e5b; width: 140px;">Full Name</td><td style="color: #0f172a; font-weight: 500;">${data.name}</td></tr>
+          <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px 0; font-weight: 600; color: #006e5b;">Company</td><td style="color: #0f172a; font-weight: 500;">${data.company}</td></tr>
+          <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px 0; font-weight: 600; color: #006e5b;">Work Email</td><td><a href="mailto:${data.email}" style="color: #008269; text-decoration: none; font-weight: 500;">${data.email}</a></td></tr>
+          <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px 0; font-weight: 600; color: #006e5b;">Phone</td><td><a href="tel:${data.phone}" style="color: #008269; text-decoration: none; font-weight: 500;">${data.phone}</a></td></tr>
+          <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px 0; font-weight: 600; color: #006e5b;">Employees</td><td style="color: #0f172a; font-weight: 500;">${data.employees}</td></tr>
+          <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 10px 0; font-weight: 600; color: #006e5b;">Date</td><td style="color: #64748b;">${date}</td></tr>
+          <tr><td style="padding: 10px 0; font-weight: 600; color: #006e5b;">Time</td><td style="color: #64748b;">${time} IST</td></tr>
         </table>
+      </div>
+      <div style="border-top: 1px solid #e2ede8; padding-top: 16px; text-align: center; font-size: 12px; color: #94a3b8;">
+        Sent automatically from Great Supports GSHRM Website System
       </div>
     </div>
   `;
 }
 
+// Customer Confirmation HTML Template
 function getCustomerEmailHtml(data: any) {
   return `
-    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
-      <div style="background-color: #0052CC; padding: 32px; border-radius: 8px 8px 0 0; text-align: center; color: white;">
-        <h2 style="margin: 0; font-size: 24px; font-weight: 700; color: white;">GSHRM Payroll</h2>
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2ede8; border-radius: 16px; background-color: #ffffff;">
+      <div style="background: linear-gradient(135deg, #006e5b, #00a87d); padding: 28px; border-radius: 12px; text-align: center; color: white;">
+        <h2 style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; color: white;">GREAT SUPPORTS GSHRM</h2>
+        <p style="margin: 6px 0 0; opacity: 0.92; font-size: 14px;">Payroll & HRMS Automation</p>
       </div>
-      <div style="padding: 24px; color: #1e293b; line-height: 1.6;">
-        <p>Hello ${data.name},</p>
-        <p>Thank you for requesting a live demo of GSHRM Payroll. We have received your request.</p>
-        <p>Our sales team will contact you shortly to schedule your personalized demonstration.</p>
-        <p>Regards,<br>GSHRM Payroll Team</p>
+      <div style="padding: 24px 8px; color: #1e293b; line-height: 1.6;">
+        <p style="font-size: 15px; margin-top: 0;">Hello <strong>${data.name}</strong>,</p>
+        <p style="font-size: 14px; color: #334155;">Thank you for requesting a live product demonstration of Great Supports GSHRM.</p>
+        <p style="font-size: 14px; color: #334155;">Our payroll and compliance specialists have received your request and will connect with you shortly to tailor a demo for <strong>${data.company}</strong>.</p>
+        <div style="background-color: #f4fbf8; border: 1px solid #c9eee1; border-radius: 8px; padding: 16px; margin: 20px 0; font-size: 13px; color: #006e5b;">
+          <strong>Quick highlights of what we'll cover:</strong>
+          <ul style="margin: 8px 0 0; padding-left: 18px; color: #334155;">
+            <li>Running complete monthly payroll in under 3 minutes</li>
+            <li>Automated PF, ESI, PT, and TDS statutory calculation</li>
+            <li>Biometric & geo-fenced attendance integration</li>
+          </ul>
+        </div>
+        <p style="font-size: 14px; color: #334155;">Warm regards,<br><strong>Great Supports Team</strong><br><a href="https://greatsupports.in" style="color: #008269; text-decoration: none;">greatsupports.in</a></p>
       </div>
     </div>
   `;

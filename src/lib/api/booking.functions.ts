@@ -180,14 +180,11 @@ export const bookDemo = async (args: { data: BookingData }) => {
       if (contentType.includes("application/json")) {
         const result = await response.json();
         if (result.success) {
-          logs.push(...(result.logs || []));
+          logs.push("Email notification successfully delivered via SMTP.");
         } else {
-          // If the serverless function itself returned an error, report it
-          errors.push(result.error || "Failed to send email");
-          if (result.logs) logs.push(...result.logs);
+          errors.push(result.message || "Unable to send email");
         }
       } else {
-        // Not a JSON response (likely SPA routing HTML fallback in local dev)
         logs.push("Serverless function not running locally. Email logged to console.");
         logMockEmail(data);
       }
@@ -196,17 +193,16 @@ export const bookDemo = async (args: { data: BookingData }) => {
         logs.push("Serverless endpoint not found (404). Email logged to console.");
         logMockEmail(data);
       } else {
-        const errorText = await response.text();
-        let parsedError = errorText;
+        let parsedMessage = "Unable to send email";
         try {
-          const parsed = JSON.parse(errorText);
-          parsedError = parsed.error || errorText;
+          const parsed = await response.json();
+          parsedMessage = parsed.message || parsedMessage;
         } catch {}
-        errors.push(`Mail Server Error: ${parsedError}`);
+        errors.push(parsedMessage);
       }
     }
   } catch (err: any) {
-    console.warn("Failed to reach serverless email endpoint:", err);
+    console.warn("Failed to reach email endpoint:", err);
     logs.push("Could not contact serverless function. Email logged to console.");
     logMockEmail(data);
   }
